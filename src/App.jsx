@@ -1,11 +1,20 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react'
-import { Plane, Check, MapPin } from 'lucide-react'
+import { Disc, PlaySquare, Component, Layout, Settings, Clock, ArrowRight, Check } from 'lucide-react'
 import { FLIGHT_TYPES, calculateBriefingTime } from './utils/calculator'
 
-// Custom Scroll Snap Time Column (iOS style)
+// Mapped specific cute gradient colors matching the image's squares
+const ICON_COLORS = [
+  'linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #FECFEF 100%)', // Pink
+  'linear-gradient(135deg, #FFB75E 0%, #ED8F03 100%)', // Orange/Yellow
+  'linear-gradient(135deg, #42E695 0%, #3BB2B8 100%)' // Mint/Teal
+];
+
+const ICONS = [PlaySquare, Component, Layout];
+
+// Custom Scroll Snap Time Column (Clean flat style)
 const ScrollColumn = ({ max, value, onChange }) => {
   const items = useMemo(() => Array.from({ length: max + 1 }, (_, i) => String(i).padStart(2, '0')), [max]);
-  const itemHeight = 60; // Exact height of one number block
+  const itemHeight = 60;
   const ref = useRef(null);
   const timeoutRef = useRef(null);
 
@@ -14,8 +23,6 @@ const ScrollColumn = ({ max, value, onChange }) => {
     if (idx !== -1 && ref.current) {
       ref.current.scrollTop = idx * itemHeight;
     }
-    // Only snap to initial value on mount.
-    // User dragging scroll shouldn't be interrupted by strict tracking variables
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -28,7 +35,7 @@ const ScrollColumn = ({ max, value, onChange }) => {
       if (items[index] && items[index] !== value) {
         onChange(items[index]);
       }
-    }, 150); // Small debounce to not fire unneeded renders mid-bounce
+    }, 100);
   };
 
   return (
@@ -40,11 +47,10 @@ const ScrollColumn = ({ max, value, onChange }) => {
         height: `${itemHeight * 3}px`,
         overflowY: 'auto',
         scrollSnapType: 'y mandatory',
-        width: '65px',
+        width: '70px',
         position: 'relative'
       }}
     >
-      {/* Top spacer so first element can snap to center exactly */}
       <div style={{ height: `${itemHeight}px` }}></div>
       {items.map(item => {
         const isSelected = item === value;
@@ -56,13 +62,12 @@ const ScrollColumn = ({ max, value, onChange }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              scrollSnapAlign: 'start', // Start aligns perfectly with 1st spacer element spacing
-              fontSize: isSelected ? '2.5rem' : '1.4rem',
-              fontWeight: isSelected ? 800 : 500,
-              opacity: isSelected ? 1 : 0.4,
-              color: isSelected ? '#5221E6' : 'var(--text-light)',
-              textShadow: isSelected ? '0 4px 10px rgba(82, 33, 230, 0.2)' : 'none',
-              transition: 'all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1)',
+              scrollSnapAlign: 'start',
+              fontSize: isSelected ? '2.4rem' : '1.5rem',
+              fontWeight: isSelected ? 800 : 600,
+              color: isSelected ? 'var(--purple-main)' : 'var(--text-light)',
+              opacity: isSelected ? 1 : 0.5,
+              transition: 'all 0.2s',
               cursor: 'pointer'
             }}
             onClick={() => {
@@ -74,7 +79,6 @@ const ScrollColumn = ({ max, value, onChange }) => {
           </div>
         )
       })}
-      {/* Bottom spacer manually pushes scroll height */}
       <div style={{ height: `${itemHeight}px` }}></div>
     </div>
   )
@@ -89,174 +93,135 @@ function App() {
   }, [etd, flightType])
 
   return (
-    <>
-      {/* Absolute background layer to mimic the stark lighting shadow in the image */}
-      <div className="bg-shadow-layer"></div>
+    <div className="app-container">
+      
+      {/* Header */}
+      <div className="app-header" style={{ justifyContent: 'center' }}>
+        <div className="app-title">ICrewTime</div>
+      </div>
 
-      <div className="liquid-panel">
+      <div className="content-area no-scrollbar">
         
-        {/* Header section */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <h1>ICrewTime</h1>
-        </div>
-
-        {/* Time Selector - mimics the white search pill from the image with Scroll Snap */}
-        <div>
-          <span className="label" style={{ marginBottom: '12px', opacity: 0.7 }}>Departure (ETD)</span>
+        {/* Soft, rounded scroll wheel container */}
+        <div className="scroll-picker-container">
+          <div className="picker-highlight"></div>
+          
           <div style={{ 
-            background: 'rgba(255, 255, 255, 0.4)', 
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            borderRadius: '32px',
-            padding: '10px 0', 
-            position: 'relative', 
-            overflow: 'hidden',
-            boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.5)'
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            gap: '16px',
+            zIndex: 2,
+            maskImage: 'linear-gradient(to bottom, transparent, black 30%, black 70%, transparent)',
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 30%, black 70%, transparent)'
           }}>
+            <ScrollColumn 
+              max={23} 
+              value={etd.split(':')[0]} 
+              onChange={(val) => setEtd(`${val}:${etd.split(':')[1]}`)} 
+            />
             
-            {/* Super premium frosted highlight pill acting as selection indicator */}
-            <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '150px',
-              height: '64px',
-              border: '1px solid rgba(255,255,255,1)',
-              background: 'rgba(255,255,255, 0.8)',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.06), inset 0 4px 10px rgba(255,255,255,0.9)',
-              pointerEvents: 'none',
-              borderRadius: '20px',
-              zIndex: 1
-            }}></div>
+            <div style={{ fontSize: '2.4rem', fontWeight: 800, color: 'var(--purple-main)', paddingBottom: '6px' }}>:</div>
 
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              gap: '12px',
-              zIndex: 2,
-              WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%)',
-              maskImage: 'linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%)'
-            }}>
-              <ScrollColumn 
-                max={23} 
-                value={etd.split(':')[0]} 
-                onChange={(val) => setEtd(`${val}:${etd.split(':')[1]}`)} 
-              />
-              
-              {/* Premium custom colon dots */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', zIndex: 3, opacity: 0.8 }}>
-                <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--text-dark)' }}></div>
-                <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--text-dark)' }}></div>
-              </div>
-
-              <ScrollColumn 
-                max={59} 
-                value={etd.split(':')[1]} 
-                onChange={(val) => setEtd(`${etd.split(':')[0]}:${val}`)} 
-              />
-            </div>
-
+            <ScrollColumn 
+              max={59} 
+              value={etd.split(':')[1]} 
+              onChange={(val) => setEtd(`${etd.split(':')[0]}:${val}`)} 
+            />
           </div>
         </div>
 
-        {/* Flight Picker - clear semi-opaque glass strips that light up purple gradient when selected */}
-        <div style={{ marginTop: '8px' }}>
-          <span className="label" style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Flight Type</span>
-            <span style={{ color: '#7b4bf3', fontWeight: '700' }}>{result?.group}</span>
-          </span>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {Object.values(FLIGHT_TYPES).map((type) => {
-              const isActive = flightType === type;
-              // Extract the short prefix (e.g. "1.1") for displaying as an icon
-              const prefixMatch = type.match(/^(\d\.\d)/);
-              const prefix = prefixMatch ? prefixMatch[1] : '';
-              
-              // Clean text without the prefix
-              const pureText = type.replace(/^\d\.\d\s/, '');
-              
-              return (
-                <button
-                  key={type}
-                  className={isActive ? 'glass-btn-active' : 'clear-pill'}
-                  onClick={() => setFlightType(type)}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div className="icon-circle">
-                      {isActive ? <Check size={16} /> : <span style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{prefix}</span>}
-                    </div>
-                    <span style={{ textAlign: 'left', lineHeight: '1.3' }}>{pureText}</span>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
+        {/* Flight Type list replacing the abstract components */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-dark)' }}>Flight Categories</span>
+          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-light)' }}>{result?.group}</span>
         </div>
 
-        {/* Dynamic Results colored glass card */}
-        {result && (
-          <div className="result-card-glass" style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '8px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span className="result-label">Briefing Time</span>
+        <div>
+          {Object.values(FLIGHT_TYPES).map((type, idx) => {
+            const isActive = flightType === type;
+            const prefixMatch = type.match(/^(\d\.\d)/);
+            const prefix = prefixMatch ? prefixMatch[1] : '';
+            const pureText = type.replace(/^\d\.\d\s/, '');
+            
+            const IconComponent = ICONS[idx % ICONS.length];
+            const iconBg = ICON_COLORS[idx % ICON_COLORS.length];
+
+            return (
               <div 
-                style={{ 
-                  background: 'rgba(255,255,255,0.6)', 
-                  padding: '12px 24px', 
-                  borderRadius: '24px',
-                  boxShadow: 'inset 0 2px 10px rgba(255,255,255,0.9), 0 4px 15px rgba(0,0,0,0.05)',
-                  minWidth: '120px',
-                  textAlign: 'center',
-                  fontSize: '2rem',
-                  fontWeight: '800',
-                  color: '#1a1a1a'
-                }}
+                key={type} 
+                className={`list-item ${isActive ? 'active' : ''}`}
+                onClick={() => setFlightType(type)}
               >
+                <div className="icon-box" style={{ background: iconBg }}>
+                  <IconComponent size={20} color="#FFF" />
+                </div>
+                
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>{pureText.substring(0, 22)}{pureText.length > 22 ? '...' : ''}</div>
+                  <div className="list-title-sub" style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-light)', marginTop: '2px' }}>
+                    Type {prefix}
+                  </div>
+                </div>
+
+                <div style={{ color: isActive ? '#FFF' : 'var(--text-light)' }}>
+                  {isActive ? <Check size={18} strokeWidth={3} /> : <ArrowRight size={18} />}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+      </div>
+
+      {/* The stunning bottom wave drawer */}
+      {result && (
+        <div className="bottom-wave" style={{ transform: result ? 'translateY(0)' : 'translateY(100%)' }}>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            
+            {/* Briefing */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ opacity: 0.8, fontSize: '0.9rem', fontWeight: 600 }}>Briefing Time</div>
+                <div style={{ fontSize: '0.8rem', opacity: 0.6, marginTop: '2px' }}>Pre-flight Check</div>
+              </div>
+              <div style={{ 
+                background: 'rgba(255,255,255,0.2)', 
+                padding: '8px 20px', 
+                borderRadius: '16px',
+                fontSize: '1.8rem',
+                fontWeight: 900
+              }}>
                 {result.briefingTime}
               </div>
             </div>
 
+            <div style={{ height: '1px', background: 'rgba(255,255,255,0.15)' }}></div>
+
+            {/* Pickup */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span className="result-label">Pickup Time</span>
-              <div 
-                style={{ 
-                  background: 'rgba(255,255,255,0.6)', 
-                  padding: '12px 24px', 
-                  borderRadius: '24px',
-                  boxShadow: 'inset 0 2px 10px rgba(255,255,255,0.9), 0 4px 15px rgba(0,0,0,0.05)',
-                  minWidth: '120px',
-                  textAlign: 'center',
-                  fontSize: '2rem',
-                  fontWeight: '800',
-                  color: '#4a2fb6'
-                }}
-              >
+              <div>
+                <div style={{ opacity: 0.8, fontSize: '0.9rem', fontWeight: 600 }}>Pickup ({result.terminal})</div>
+                <div style={{ fontSize: '0.8rem', opacity: 0.6, marginTop: '2px' }}>{result.offsetT1}</div>
+              </div>
+              <div style={{ 
+                background: 'rgba(255,255,255,0.2)', 
+                padding: '8px 20px', 
+                borderRadius: '16px',
+                fontSize: '1.8rem',
+                fontWeight: 900,
+                color: '#3DE5CC'
+              }}>
                 {result.pickupTime}
               </div>
             </div>
-            
-            {/* Soft inner pill for Terminal location */}
-            <div style={{ 
-              marginTop: '4px',
-              padding: '12px', 
-              background: 'rgba(255,255,255,0.3)', 
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              border: '1px solid rgba(255,255,255,0.5)',
-              position: 'relative',
-              zIndex: 2
-            }}>
-              <MapPin size={18} />
-              <span style={{ fontWeight: '600', fontSize: '0.85rem' }}>{result.terminal}</span>
-              <span style={{ fontSize: '0.75rem', marginLeft: 'auto', opacity: 0.8 }}>{result.offsetT1}</span>
-            </div>
+
           </div>
-        )}
-      </div>
-    </>
+        </div>
+      )}
+
+    </div>
   )
 }
 
